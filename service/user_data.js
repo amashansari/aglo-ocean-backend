@@ -32,9 +32,10 @@ const postUserData = async ({ req,first_name, last_name, birth_date }) => {
     };
     try {
         const userData = req.app.locals.userData;
-        userData.push({ first_name, last_name, birth_date });
+        let addData ={ first_name, last_name, birth_date }
+        userData.push(addData);
         if (userData && userData.length > 0) {
-            result.data = userData;
+            result.data = addData;
             result.message = "success";
             result.status = 1;
         } else {

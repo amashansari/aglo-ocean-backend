@@ -11,11 +11,7 @@ app.locals.userData = [];
 
 const user_data_routes = require("./routes/user_data");
 
-/////// GET ///////
-app.get("/", app.use(user_data_routes));
-
-/////// POST ///////
-app.post("/", user_data_routes);
+app.use("/", user_data_routes);
 
 
 app.listen(8080);
