@@ -1,5 +1,5 @@
 const qrcode = require('qrcode-terminal');
-const { Client, LocalAuth} = require('whatsapp-web.js');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 
 /////// GET ///////
 const getAllUserData = async (req) => {
@@ -26,7 +26,7 @@ const getAllUserData = async (req) => {
 };
 
 /////// POST ///////
-const postUserData = async ({ req,first_name, last_name, birth_date }) => {
+const postUserData = async ({ req, first_name, last_name, birth_date }) => {
     let result = {
         status: 0,
         message: "",
@@ -34,7 +34,7 @@ const postUserData = async ({ req,first_name, last_name, birth_date }) => {
     };
     try {
         const userData = req.app.locals.userData;
-        let addData ={ first_name, last_name, birth_date }
+        let addData = { first_name, last_name, birth_date }
         userData.push(addData);
         if (userData && userData.length > 0) {
             result.data = addData;
@@ -52,88 +52,92 @@ const postUserData = async ({ req,first_name, last_name, birth_date }) => {
 }
 
 const getQrCodeForWhatsappWeb = () => {
-  const whatsapp = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-      headless: true,
-      args: ['--no-sandbox'],
-    }
-  });
 
-  // Temporary storage for user data
-  const userResponses = {};
+    return new Promise((resolve, reject) => {
+        const whatsapp = new Client({
+            authStrategy: new LocalAuth(),
+            puppeteer: {
+                headless: true,
+                args: ['--no-sandbox'],
+            }
+        });
 
-  // QR Code Handling
-  whatsapp.on('qr', qr => {
-    qrcode.generate(qr, { small: true });
-  });
+        // Temporary storage for user data
+        const userResponses = {};
 
-  // Message Handling
-  whatsapp.on('message', async message => {
-    let result = {
-      status: 0,
-      message: "",
-      data: "",
-    };
+        // QR Code Handling
+        whatsapp.on('qr', qr => {
+            qrcode.generate(qr, { small: true });
+            resolve(qr);
+        });
+
+        // Message Handling
+        whatsapp.on('message', async message => {
+            let result = {
+                status: 0,
+                message: "",
+                data: "",
+            };
 
 
-    const userNumber = message.from.replace(/@c\.us$/, '');
+            const userNumber = message.from.replace(/@c\.us$/, '');
 
-    // Ignore groups and status updates
-    if (userNumber.includes("@g.us") || userNumber.includes("status@broadcast")) {
-      return;
-    }
+            // Ignore groups and status updates
+            if (userNumber.includes("@g.us") || userNumber.includes("status@broadcast")) {
+                return;
+            }
 
-    const userMessage = message.body.trim().toLowerCase();
+            const userMessage = message.body.trim().toLowerCase();
 
-    if (!userResponses[userNumber]) {
-      userResponses[userNumber] = {};
-    }
+            if (!userResponses[userNumber]) {
+                userResponses[userNumber] = {};
+            }
 
-    const userData = userResponses[userNumber];
+            const userData = userResponses[userNumber];
 
-    // First message: say hello and ask for name
-    if (userMessage === "hello") {
-      const randomOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
-      userData.otp = randomOTP;
-      userData.state = "otp_sent";
+            // First message: say hello and ask for name
+            if (userMessage === "hello") {
+                const randomOTP = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
+                userData.otp = randomOTP;
+                userData.state = "otp_sent";
 
-      await message.reply(`Hello! Your verification code is: *${randomOTP}*`);
-      console.log(`Sent OTP ${randomOTP} to ${userNumber}`);
-    //   const conn = await pool.getConnection();
-    //   try {
-    //     const currentTime = utils.commonFormateDate(new Date());
-    //     const query = `
-    //   INSERT INTO otp_verification (
-    //     phone_number,
-    //     otp_code,
-    //     sent_at
-    //   ) VALUES ( ?, ?, ?)
-    // `;
-    //     const [res] = await conn.query(query, [
-    //       userNumber,
-    //       randomOTP,
-    //       currentTime
-    //     ]); if (res && res.insertId) {
-    //       result.data = { id: res.insertId };
-    //       result.message = "Otp Inserted Successfully!";
-    //       result.status = 1;
-    //     } else {
-    //       result.message = "Something went wrong.";
-    //     }
-    //   } catch (error) {
-    //     result.message = error;
-    //   } finally {
-    //     conn.release();
-    //   }
-    }
-  });
+                await message.reply(`Hello! Your verification code is: *${randomOTP}*`);
+                console.log(`Sent OTP ${randomOTP} to ${userNumber}`);
+                //   const conn = await pool.getConnection();
+                //   try {
+                //     const currentTime = utils.commonFormateDate(new Date());
+                //     const query = `
+                //   INSERT INTO otp_verification (
+                //     phone_number,
+                //     otp_code,
+                //     sent_at
+                //   ) VALUES ( ?, ?, ?)
+                // `;
+                //     const [res] = await conn.query(query, [
+                //       userNumber,
+                //       randomOTP,
+                //       currentTime
+                //     ]); if (res && res.insertId) {
+                //       result.data = { id: res.insertId };
+                //       result.message = "Otp Inserted Successfully!";
+                //       result.status = 1;
+                //     } else {
+                //       result.message = "Something went wrong.";
+                //     }
+                //   } catch (error) {
+                //     result.message = error;
+                //   } finally {
+                //     conn.release();
+                //   }
+            }
+        });
 
-  whatsapp.on('ready', () => {
-    console.log("Client is ready");
-  });
+        whatsapp.on('ready', () => {
+            console.log("Client is ready");
+        });
 
-  whatsapp.initialize();
+        whatsapp.initialize();
+    });
 };
 
 module.exports = {
