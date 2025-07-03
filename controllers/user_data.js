@@ -60,7 +60,7 @@ getQrCodeForWhatsappWeb = async (req, res, next) => {
     deleteFolderIfExists(cachePath);
 
     const qrData = await UserDataService.getQrCodeForWhatsappWeb();
-    res.status(200).json({ status: 1, qr: qrData, qrimage: qrImagePath });
+    res.status(200).json({ status: 1, qr: qrData, qrimage: qrImageBase64 });
   } catch (error) {
     res.status(500).json({ status: 0, message: "Failed to generate QR", error });
   }
